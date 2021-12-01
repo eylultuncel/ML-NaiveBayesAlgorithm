@@ -47,12 +47,9 @@ def calculate_probability(x_test, unique_words_dict, count_mails, total_words_di
         
         print(len(x_test[i][0]))
 
-        for j in range():
-            cur_word =
-            logp = math.log(2)
-    
-    
-    
+        # for j in range():
+        #     cur_word =
+        #     logp = math.log(2)
 
 
 def vectorizer(x):
@@ -134,9 +131,6 @@ def main(total_words_dis=None):
     unique_words_dict, count_mails, total_words_dist = vectorizer(x_train)
     calculate_probability(x_test, unique_words_dict, count_mails, total_words_dis)
     
-    
-    
-
 
 if __name__ == "__main__":
     main()
