@@ -69,6 +69,25 @@ def calculate_probability(x_test, unique_words_dict, count_mails, total_words_di
                 probability_spam += math.log(spam_count/spam_denominator)
                 probability_ham += math.log(ham_count/ham_denominator)
 
+                # Algorithm that only laplace smoothing in 0 spam or ham values
+                #  spam_count = 0
+                # ham_count = 0
+                # spam_denominator = total_words_dist[0]
+                # ham_denominator = total_words_dist[1]
+                # word = unique_words_dict.get(vocabulary[j])
+                # if(word is not None):
+                #     spam_count = word[0]
+                #     ham_count = word[1]
+                # if(spam_count == 0):
+                #     spam_count = 1
+                #     spam_denominator += len(unique_words_dict)
+                # if(ham_count == 0):
+                #     ham_count = 1
+                #     ham_denominator += len(unique_words_dict)
+    
+                # probability_spam += math.log(spam_count/spam_denominator)
+                # probability_ham += math.log(ham_count/ham_denominator)
+
         print(probability_spam, probability_ham)
 
         if(probability_spam > probability_ham):
