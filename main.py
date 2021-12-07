@@ -15,11 +15,9 @@ def split_data(x):
 
     # 1/5 part of the data set as test data
     x_test = x[0:size]
-    print(x_test.shape)
 
     # 4/5 part of the data set as test data
     x_train = x[size:]
-    print(x_train.shape)
     return x_test, x_train
 
 
@@ -232,8 +230,9 @@ def tf_idf(x, stop_words_out):
             if len(my_stop_words.intersection([word])) > 0:
                 ham_words.remove(word)
 
-    print("spam words", spam_words[:10])
-    print("ham words", ham_words[:10])
+    print("Spam Words", spam_words[:10])
+    print("Ham Words", ham_words[:10])
+    print()
 
     total_spam_words_val = 0
     total_ham_words_val = 0
@@ -255,9 +254,6 @@ def tf_idf(x, stop_words_out):
 # this function gets most frequent words which are in spam/ham mails
 # but the words appear both in spam and ham mails are didn't accepted
 def max_prob_words_by_naive_bayes(unique_words_dict, total_words_dist):
-    # for el in unique_words_dict.keys():
-    #     print(el, "-", unique_words_dict.get(el))
-
     max_spam_count = 0
     max_spam_word1 = ""
     max_spam_word2 = ""
@@ -284,13 +280,13 @@ def max_prob_words_by_naive_bayes(unique_words_dict, total_words_dist):
             max_ham_word2 = max_ham_word1
             max_ham_word1 = x
 
-    print("max ham1 : ", max_ham_word1)
-    print("max ham2 : ", max_ham_word2)
-    print("max ham3 : ", max_ham_word3)
+    print("Most frequent ham word  : ", max_ham_word1)
+    print("Second frequent ham word : ", max_ham_word2)
+    print("Third frequent ham word : ", max_ham_word3)
     print()
-    print("max spam1 : ", max_spam_word1)
-    print("max spam2 : ", max_spam_word2)
-    print("max spam3 : ", max_spam_word3)
+    print("Most frequent spam word : ", max_spam_word1)
+    print("Second frequent spam word : ", max_spam_word2)
+    print("Third frequent ham word : ", max_spam_word3)
     print()
     return
 
@@ -346,9 +342,11 @@ def main(total_words_dis=None):
     unique_words_dict, count_mails, total_words_dist = vectorizer(x_train.copy(), 1)
 
     # PART1
+    print("PART1 \n------------------------------------------------------------")
     max_prob_words_by_naive_bayes(unique_words_dict, total_words_dist)
 
     # PART2
+    print("PART2 \n------------------------------------------------------------")
     # calculate probabilities of all given test data
     results = calculate_probability(x_test.copy(), unique_words_dict, total_words_dist, 1)
 
@@ -375,6 +373,7 @@ def main(total_words_dis=None):
     # print()
 
     # PART3
+    print("PART3 \n------------------------------------------------------------")
     print("TF-IDF")
     unique_words_dict, total_words_dist = tf_idf(x_train.copy(), False)
     # calculate probabilities of all given test data
