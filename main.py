@@ -23,7 +23,7 @@ def split_data(x):
     return x_test, x_train
 
 
-def calculate_probability(x_test, unique_words_dict, count_mails, total_words_dist, n_gram):
+def calculate_probability(x_test, unique_words_dict, total_words_dist, n_gram):
     # take all the texts of mails in test data
     text_col = []
     for i in range(x_test.shape[0]):
@@ -31,7 +31,7 @@ def calculate_probability(x_test, unique_words_dict, count_mails, total_words_di
 
     # initialize count vectorizer
     if n_gram == 1:
-        count_vectorizer = CountVectorizer()
+        count_vectorizer = CountVectorizer(max_df=1.0, min_df=1)
     elif n_gram == 2:
         count_vectorizer = CountVectorizer(analyzer='word', ngram_range=(2, 2))
     # matrix of token counts in test data
@@ -102,7 +102,7 @@ def vectorizer(x, n_gram):
 
     # initialize count vectorizer
     if n_gram == 1:
-        count_vectorizer = CountVectorizer()
+        count_vectorizer = CountVectorizer(max_df=1.0, min_df=1)
     elif n_gram == 2:
         count_vectorizer = CountVectorizer(analyzer='word', ngram_range=(2, 2))
     # matrix of token counts
@@ -155,7 +155,7 @@ def vectorizer(x, n_gram):
     return unique_words_dict, count_mails, total_words_dist
 
 
-def tf_idf(x):
+def tf_idf(x, stop_words_out):
     text_col_spam = []
     text_col_ham = []
     for i in range(x.shape[0]):
@@ -163,6 +163,8 @@ def tf_idf(x):
             text_col_spam.append(x[i, 0])
         elif x[i][1] == 0:
             text_col_ham.append(x[i, 0])
+
+    my_stop_words = ENGLISH_STOP_WORDS.union()
 
     count_vectorizer_spam = CountVectorizer()
     matrix = count_vectorizer_spam.fit_transform(text_col_spam)
@@ -217,14 +219,45 @@ def tf_idf(x):
             if ham_words.count(word) > 0:
                 ham_words.remove(word)
 
+    if stop_words_out:
+        sp = spam_words.copy()
+        for i in range(len(sp)):
+            word = sp[i]
+            if len(my_stop_words.intersection([word])) > 0:
+                spam_words.remove(word)
+
+        hm = ham_words.copy()
+        for i in range(len(hm)):
+            word = hm[i]
+            if len(my_stop_words.intersection([word])) > 0:
+                ham_words.remove(word)
+
     print("spam words", spam_words[:10])
     print("ham words", ham_words[:10])
-    return
+
+    total_spam_words_val = 0
+    total_ham_words_val = 0
+    unique_words_dict = {}
+    for el in spam_tf_idf_dict.keys():
+        unique_words_dict[el] = [spam_tf_idf_dict.get(el), 0]
+        total_spam_words_val += spam_tf_idf_dict.get(el)
+    for el in ham_tf_idf_dict.keys():
+        if unique_words_dict.get(el) is not None:
+            unique_words_dict[el] = [unique_words_dict.get(el)[0], ham_tf_idf_dict.get(el)]
+        else:
+            unique_words_dict[el] = [0, ham_tf_idf_dict.get(el)]
+        total_ham_words_val = ham_tf_idf_dict.get(el)
+
+    total_words_dist = [total_spam_words_val, total_ham_words_val]
+    return unique_words_dict , total_words_dist
 
 
 # this function gets most frequent words which are in spam/ham mails
 # but the words appear both in spam and ham mails are didn't accepted
 def max_prob_words_by_naive_bayes(unique_words_dict, total_words_dist):
+    # for el in unique_words_dict.keys():
+    #     print(el, "-", unique_words_dict.get(el))
+
     max_spam_count = 0
     max_spam_word1 = ""
     max_spam_word2 = ""
@@ -237,21 +270,21 @@ def max_prob_words_by_naive_bayes(unique_words_dict, total_words_dist):
     for x in unique_words_dict.keys():
         arr = unique_words_dict.get(x)
 
-        # get most frequent spam words (but not the ones which are appeared in ham mails too)
+        # spam
         if arr[0] > max_spam_count and ((arr[1] / total_words_dist[1]) / (arr[0] / total_words_dist[0])) < 0.5:
             max_spam_count = arr[0]
             max_spam_word3 = max_spam_word2
             max_spam_word2 = max_spam_word1
             max_spam_word1 = x
 
-        # get most frequent ham words (but not the ones which are appeared in spam mails too)
+        # ham
         if arr[1] > max_ham_count and ((arr[0] / total_words_dist[0]) / (arr[1] / total_words_dist[1])) < 0.3:
             max_ham_count = arr[1]
             max_ham_word3 = max_ham_word2
             max_ham_word2 = max_ham_word1
             max_ham_word1 = x
 
-    print("Most frequent ham : ", max_ham_word1)
+    print("max ham1 : ", max_ham_word1)
     print("max ham2 : ", max_ham_word2)
     print("max ham3 : ", max_ham_word3)
     print()
@@ -317,7 +350,7 @@ def main(total_words_dis=None):
 
     # PART2
     # calculate probabilities of all given test data
-    results = calculate_probability(x_test.copy(), unique_words_dict, count_mails, total_words_dist, 1)
+    results = calculate_probability(x_test.copy(), unique_words_dict, total_words_dist, 1)
 
     # calculate performance of the given results
     accuracy, precision, recall, f1_score = calculate_performance(results)
@@ -327,23 +360,36 @@ def main(total_words_dis=None):
     print("Unigram F1 score: ", f1_score)
     print()
 
-    # BIGRAM
-    # create dictionary of unique words
-    unique_words_dict, count_mails, total_words_dist = vectorizer(x_train.copy(), 2)
-    # calculate probabilities of all given test data
-    results = calculate_probability(x_test.copy(), unique_words_dict, count_mails, total_words_dist, 2)
-
-    # calculate performance of the given results
-    accuracy, precision, recall, f1_score = calculate_performance(results)
-    print("Bigram Accuracy: ", accuracy)
-    print("Bigram Precision: ", precision)
-    print("Bigram recall: ", recall)
-    print("Bigram F1 score: ", f1_score)
-    print()
+    # # BIGRAM
+    # # create dictionary of unique words
+    # unique_words_dict, count_mails, total_words_dist = vectorizer(x_train.copy(), 2)
+    # # calculate probabilities of all given test data
+    # results = calculate_probability(x_test.copy(), unique_words_dict, total_words_dist, 2)
+    #
+    # # calculate performance of the given results
+    # accuracy, precision, recall, f1_score = calculate_performance(results)
+    # print("Bigram Accuracy: ", accuracy)
+    # print("Bigram Precision: ", precision)
+    # print("Bigram recall: ", recall)
+    # print("Bigram F1 score: ", f1_score)
+    # print()
 
     # PART3
     print("TF-IDF")
-    tf_idf(x_train.copy())
+    unique_words_dict, total_words_dist = tf_idf(x_train.copy(), False)
+    # calculate probabilities of all given test data
+    results = calculate_probability(x_test.copy(), unique_words_dict, total_words_dist, 1)
+
+    # calculate performance of the given results
+    accuracy, precision, recall, f1_score = calculate_performance(results)
+    print("Unigram Accuracy: ", accuracy)
+    print("Unigram Precision: ", precision)
+    print("Unigram recall: ", recall)
+    print("Unigram F1 score: ", f1_score)
+    print()
+
+    print("NON STOP WORDS")
+    tf_idf(x_train.copy(), True)
 
 
 if __name__ == "__main__":
