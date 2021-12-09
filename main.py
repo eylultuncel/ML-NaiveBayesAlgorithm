@@ -238,17 +238,29 @@ def tf_idf(x, stop_words_out):
     total_ham_words_val = 0
     unique_words_dict = {}
     for el in spam_tf_idf_dict.keys():
-        unique_words_dict[el] = [spam_tf_idf_dict.get(el), 0]
+        x = spam_tf_idf_dict.get(el)
+        unique_words_dict[el] = [x, 0]
         total_spam_words_val += spam_tf_idf_dict.get(el)
     for el in ham_tf_idf_dict.keys():
+        x = ham_tf_idf_dict.get(el)
         if unique_words_dict.get(el) is not None:
-            unique_words_dict[el] = [unique_words_dict.get(el)[0], ham_tf_idf_dict.get(el)]
+            unique_words_dict[el] = [unique_words_dict.get(el)[0], x]
         else:
             unique_words_dict[el] = [0, ham_tf_idf_dict.get(el)]
-        total_ham_words_val = ham_tf_idf_dict.get(el)
+        total_ham_words_val += ham_tf_idf_dict.get(el)
 
-    total_words_dist = [total_spam_words_val, total_ham_words_val]
-    return unique_words_dict , total_words_dist
+    total_words_dist = [(total_spam_words_val / len(spam_tf_idf_dict)), (total_ham_words_val/ len(ham_tf_idf_dict))]
+
+    dict_copy = unique_words_dict.copy()
+    for el in dict_copy.keys():
+        arr = unique_words_dict.get(el)
+        if arr[0] > 6 or arr[0] < 1.5:
+            unique_words_dict[el] = [0, unique_words_dict.get(el)[1]]
+        if arr[1] > 6 or arr[1] < 1.5:
+            unique_words_dict[el] = [unique_words_dict.get(el)[0], 0]
+
+    print(total_words_dist)
+    return unique_words_dict, total_words_dist
 
 
 # this function gets most frequent words which are in spam/ham mails
